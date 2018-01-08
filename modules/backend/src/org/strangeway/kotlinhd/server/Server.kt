@@ -11,7 +11,6 @@ import kotlin.system.exitProcess
 
 object Server {
     private val gson = Gson()
-    private var idSequence = 0
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -45,7 +44,6 @@ object Server {
             }
             "add" -> {
                 val item = gson.fromJson(message.payload, Todo::class.java)
-                item.id = (idSequence++).toString()
                 TodoService.add(item)
 
                 val response = Response(message.id, gson.toJsonTree(item).asJsonObject)

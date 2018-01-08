@@ -4,9 +4,12 @@ import org.strangeway.kotlinhd.model.Todo
 import java.util.Collections.unmodifiableList
 
 object TodoService {
+    private var idSequence = 0
+
     private val todos = mutableListOf<Todo>()
 
     fun add(todo: Todo) {
+        todo.id = (idSequence++).toString()
         todos.add(todo)
     }
 
