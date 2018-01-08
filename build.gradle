@@ -41,6 +41,7 @@ configure(project(':backend')) {
 
 configure(project(':ui')) {
     apply plugin: 'kotlin2js'
+    apply plugin: 'kotlin-dce-js'
 
     dependencies {
         compile 'org.jetbrains.kotlin:kotlin-stdlib-js:1.2.10'
@@ -49,12 +50,14 @@ configure(project(':ui')) {
         compile project(':model')
     }
 
-    task prepareWeb(dependsOn: compileKotlin2Js) {
+    task prepareWeb(dependsOn: [compileKotlin2Js, runDceKotlinJs]) {
         inputs.dir file('src')
         inputs.dir file('web')
         outputs.dir file('build/web')
 
         doLast {
+            file('build/web').deleteDir()
+
             copy {
                 configurations.compile.each { File file ->
                     from(zipTree(file.absolutePath), {
@@ -66,10 +69,20 @@ configure(project(':ui')) {
                         }
                     })
                 }
-                from compileKotlin2Js.destinationDir
+                into "${projectDir}/build/web"
+            }
+
+            copy {
+                from new File(file(compileKotlin2Js.destinationDir), 'min')
+                into "${projectDir}/build/web"
+
+                exclude '**/*.map'
+                exclude '**/*.kjsm'
+            }
+
+            copy {
                 from file('web')
                 into "${projectDir}/build/web"
-                includeEmptyDirs = false
             }
         }
     }
@@ -77,7 +90,7 @@ configure(project(':ui')) {
     compileKotlin2Js {
         kotlinOptions.outputFile = "${projectDir}/build/kjs/todolist.js"
         kotlinOptions.moduleKind = "plain"
-        kotlinOptions.sourceMap = true
+        kotlinOptions.sourceMap = false
     }
 
     assemble.dependsOn prepareWeb
