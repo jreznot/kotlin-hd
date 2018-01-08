@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import org.strangeway.kotlinhd.model.Todo
 import org.strangeway.kotlinhd.server.service.TodoService
 import org.strangeway.kotlinhd.server.sys.Message
+import org.strangeway.kotlinhd.server.sys.Response
 import java.io.FileNotFoundException
 import java.io.RandomAccessFile
 import kotlin.system.exitProcess
@@ -37,32 +38,32 @@ object Server {
     private fun dataReceived(jsonMessage: String, pipe: RandomAccessFile) {
         val message = gson.fromJson(jsonMessage, Message::class.java)
 
-        when (message.id) {
+        when (message.method) {
             "list" -> {
-                val response = gson.toJson(TodoService.list())
-                pipe.writeBytes(response + "\n")
+                val response = Response(message.id, gson.toJsonTree(TodoService.list()).asJsonObject)
+                pipe.writeBytes(gson.toJson(response) + "\n")
             }
             "add" -> {
                 val item = gson.fromJson(message.payload, Todo::class.java)
                 item.id = (idSequence++).toString()
                 TodoService.add(item)
 
-                val response = gson.toJson(item)
-                pipe.writeBytes(response + "\n")
+                val response = Response(message.id, gson.toJsonTree(item).asJsonObject)
+                pipe.writeBytes(gson.toJson(response) + "\n")
             }
             "remove" -> {
                 val item = gson.fromJson(message.payload, Todo::class.java)
                 TodoService.remove(item)
 
-                val response = gson.toJson(item)
-                pipe.writeBytes(response + "\n")
+                val response = Response(message.id, gson.toJsonTree(item).asJsonObject)
+                pipe.writeBytes(gson.toJson(response) + "\n")
             }
             "update" -> {
                 val item = gson.fromJson(message.payload, Todo::class.java)
                 TodoService.update(item)
 
-                val response = gson.toJson(item)
-                pipe.writeBytes(response + "\n")
+                val response = Response(message.id, gson.toJsonTree(item).asJsonObject)
+                pipe.writeBytes(gson.toJson(response) + "\n")
             }
         }
     }
