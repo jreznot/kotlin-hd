@@ -1,0 +1,9 @@
+rootProject.name = 'kotlin-hd'
+
+include ':model'
+include ':backend'
+include ':ui'
+
+project(':model').projectDir = new File('modules/model')
+project(':backend').projectDir = new File('modules/backend')
+project(':ui').projectDir = new File('modules/ui')

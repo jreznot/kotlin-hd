@@ -1,0 +1,48 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.2.10" apply false
+}
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+}
+
+configure([project(':model'), project(':backend'), project(':ui')]) {
+    apply plugin: 'kotlin'
+
+    sourceSets {
+        main {
+            kotlin {
+                srcDirs += file('src')
+            }
+        }
+    }
+}
+
+configure(project(':model')) {
+    dependencies {
+        compile 'org.jetbrains.kotlin:kotlin-stdlib-common:1.2.10'
+    }
+}
+
+configure(project(':backend')) {
+    apply plugin: 'application'
+
+    dependencies {
+        compile('org.jetbrains.kotlin:kotlin-stdlib-jre8:1.2.10')
+        compile('com.google.code.gson:gson:2.8.2')
+
+        compile project(':model')
+    }
+
+    mainClassName = 'org.strangeway.kotlinhd.server.Server'
+}
+
+configure(project(':ui')) {
+    dependencies {
+        compile 'org.jetbrains.kotlin:kotlin-stdlib-js:1.2.10'
+
+        compile project(':backend')
+    }
+}
