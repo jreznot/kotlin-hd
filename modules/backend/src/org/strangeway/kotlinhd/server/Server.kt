@@ -14,6 +14,8 @@ object Server {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        println("Starting backend...")
+
         val pipe: RandomAccessFile
 
         try {
@@ -35,9 +37,15 @@ object Server {
     }
 
     private fun dataReceived(jsonMessage: String, pipe: RandomAccessFile) {
+        println("Received message: $jsonMessage")
+
         val message = gson.fromJson(jsonMessage, Message::class.java)
 
         when (message.method) {
+            "hello" -> {
+                val response = Response(message.id, gson.toJsonTree("Hi!").asJsonObject)
+                pipe.writeBytes(gson.toJson(response) + "\n")
+            }
             "list" -> {
                 val response = Response(message.id, gson.toJsonTree(TodoService.list()).asJsonObject)
                 pipe.writeBytes(gson.toJson(response) + "\n")

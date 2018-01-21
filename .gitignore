@@ -4,4 +4,6 @@ out/
 .idea/
 node_modules/
 
+modules/ui/web/backend/
+
 *.iml
