@@ -8,12 +8,48 @@ let serverProcess;
 
 let pipeStream;
 
+let pipeRequestIdSeq = 0;
+let pipeRequests = new Map();
+
+global.pipe = {};
+global.pipe.send = function(method, payload) {
+    let requestId = pipeRequestIdSeq++;
+
+    let message = {
+        id: requestId.toString(),
+        method: method,
+        payload: payload
+    };
+    console.log("> Request sent: " + message.id);
+    pipeStream.write(JSON.stringify(message) + '\n');
+
+    let _received;
+
+    var promise = new Promise(function(resolve, reject) {
+        _received = resolve;
+    });
+    promise.received = _received;
+    pipeRequests.set(message.id, promise);
+
+    return promise
+};
+
 function createWindow() {
     let PIPE_PATH = '\\\\.\\pipe\\demo';
 
     const pipeServer = net.createServer(function(stream) {
         stream.on('data', function(c) {
             console.log('Pipe: ', c.toString().trim());
+
+            let data = JSON.parse(c);
+            if (data.id && data.payload) {
+                let promise = pipeRequests.get(data.id);
+                if (promise) {
+                    console.log("< Response received: " + data.id);
+
+                    promise.received(data.payload);
+                }
+            }
         });
         stream.on('end', function() {
             pipeServer.close();
@@ -23,11 +59,7 @@ function createWindow() {
 
         console.log('Pipe is connected');
 
-        let helloMessage = {
-            id: '1',
-            method: 'hello'
-        };
-        pipeStream.write(JSON.stringify(helloMessage) + '\n');
+        global.pipe.send('hello', {});
     }).listen(PIPE_PATH, function () {
         // Windows only
         serverProcess = require('child_process')
