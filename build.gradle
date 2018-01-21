@@ -1,5 +1,6 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.2.10" apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.2.10' apply false
+    id 'com.moowork.node' version '1.2.0' apply false
 }
 
 allprojects {
@@ -42,17 +43,35 @@ configure(project(':backend')) {
 configure(project(':ui')) {
     apply plugin: 'kotlin2js'
     apply plugin: 'kotlin-dce-js'
+    apply plugin: 'com.moowork.node'
 
     dependencies {
         compile 'org.jetbrains.kotlin:kotlin-stdlib-js:1.2.10'
 
-        compile project(':backend')
         compile project(':model')
     }
 
-    task prepareWeb(dependsOn: [compileKotlin2Js, runDceKotlinJs]) {
+    compileKotlin2Js {
+        kotlinOptions.outputFile = "${projectDir}/build/kjs/todolist.js"
+        kotlinOptions.moduleKind = "plain"
+        kotlinOptions.sourceMap = false
+    }
+
+    node {
+        version = '8.9.1'
+        download = true
+        nodeModulesDir = project.file('web')
+    }
+
+    npm_install {
+        workingDir = project.file('web')
+    }
+
+    task prepareWeb(dependsOn: [compileKotlin2Js, runDceKotlinJs, npm_install,
+                                project(':backend').installDist]) {
         inputs.dir file('src')
         inputs.dir file('web')
+        inputs.dir project(':backend').file('build/install')
         outputs.dir file('build/web')
 
         doLast {
@@ -84,19 +103,50 @@ configure(project(':ui')) {
                 from file('web')
                 into "${projectDir}/build/web"
             }
+
+            copy {
+                from project(':backend').file('build/install')
+                into "${projectDir}/build/web"
+            }
         }
     }
 
-    compileKotlin2Js {
-        kotlinOptions.outputFile = "${projectDir}/build/kjs/todolist.js"
-        kotlinOptions.moduleKind = "plain"
-        kotlinOptions.sourceMap = false
-    }
-
     assemble.dependsOn prepareWeb
+
+    task runElectron(dependsOn: prepareWeb) {
+        doLast {
+            def osName = System.getProperty('os.name').toLowerCase()
+            def isWindows = osName.contains('windows')
+
+            def localNodeInstallDir = ((File)node.workDir).listFiles().find {
+                it.name.startsWith('node-') && it.name.contains(node.version)
+            }
+            def nodeDir = isWindows ? localNodeInstallDir : new File(localNodeInstallDir, 'bin')
+
+            exec {
+                workingDir 'build/web'
+                environment 'PATH', System.getenv('PATH') + File.pathSeparator + nodeDir.absolutePath
+                if (isWindows) {
+                    commandLine 'cmd', '/c', '"./node_modules/.bin/electron" .'
+                } else {
+                    commandLine './node_modules/.bin/electron', '.'
+                }
+            }
+        }
+    }
 }
 
-configure([project(':model'), project(':backend'), project(':ui')]) {
+configure([project(':model'), project(':backend')]) {
+    sourceSets {
+        main {
+            kotlin {
+                srcDirs += file('src')
+            }
+        }
+    }
+}
+
+configure([project(':ui')]) {
     sourceSets {
         main {
             kotlin {

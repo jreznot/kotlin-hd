@@ -2,11 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Todos!</title>
+    <title>TODOS !</title>
+
+    <!-- Fix jquery with electron -->
+    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+    <script type="text/javascript" src="lib/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="lib/bootstrap/bootstrap.min.js"></script>
+    <script type="text/javascript" src="lib/jquery/jquery.ui.min.js"></script>
+    <script type="text/javascript" src="assets/todo.js"></script>
+
+    <!-- Fix jquery with electron -->
+    <script>if (window.module) module = window.module;</script>
+
+    <link rel="stylesheet" href="lib/bootstrap/bootstrap.min.css"/>
+    <link rel="stylesheet" href="lib/jquery/jquery.ui.min.css"/>
+    <link rel="stylesheet" href="assets/todo.css"/>
 </head>
 
-<body>
+<body class="well">
 <script type="text/javascript" src="kotlin.js"></script>
 <script type="text/javascript" src="todolist.js"></script>
+
+<div id="container">
+
+    <div id="header"> TODOS ! </div>
+
+    <div class="task-list task-container" id="pending">
+        <h3>Backlog</h3>
+    </div>
+
+    <div class="task-list task-container" id="inProgress">
+        <h3>In Progress</h3>
+    </div>
+
+    <div class="task-list task-container" id="completed">
+        <h3>Done</h3>
+    </div>
+
+    <div class="task-list">
+        <h3>Add</h3>
+        <form id="todo-form">
+            <input type="text" placeholder="Title" />
+            <textarea placeholder="Description"></textarea>
+            <input type="text" id="datepicker" placeholder="Due Date (dd/mm/yyyy)" />
+            <input type="button" class="btn btn-primary add-task-btn" value="Add Task" onclick="todo.add();" />
+        </form>
+        <div id="delete-div">
+            Drop Here to Delete
+        </div>
+    </div>
+
+    <div style="clear:both;"></div>
+
+    <script type="text/javascript">
+        let $datepicker = $("#datepicker");
+
+        $datepicker.datepicker();
+        $datepicker.datepicker("option", "dateFormat", "dd/mm/yy");
+        $(".task-container").droppable();
+        $(".todo-task").draggable({ revert: "valid", revertDuration:200 });
+        todo.init();
+    </script>
+</div>
 </body>
 </html>

@@ -1,6 +1,7 @@
 package org.strangeway.kotlinhd.server
 
 import com.google.gson.Gson
+import com.google.gson.JsonPrimitive
 import org.strangeway.kotlinhd.model.Todo
 import org.strangeway.kotlinhd.server.service.TodoService
 import org.strangeway.kotlinhd.server.sys.Message
@@ -28,7 +29,11 @@ object Server {
 
         var data: String? = pipe.readLine()
         while (data != null) {
-            dataReceived(data, pipe)
+            try {
+                dataReceived(data.trim(), pipe)
+            } catch (e: RuntimeException) {
+                println("Error during request processing: " + e.message)
+            }
 
             data = pipe.readLine()
         }
@@ -43,34 +48,38 @@ object Server {
 
         when (message.method) {
             "hello" -> {
-                val response = Response(message.id, gson.toJsonTree("Hi!").asJsonObject)
-                pipe.writeBytes(gson.toJson(response) + "\n")
+                val response = Response(message.id, JsonPrimitive("Hi!"))
+                pipeSend(pipe, response)
             }
             "list" -> {
                 val response = Response(message.id, gson.toJsonTree(TodoService.list()).asJsonObject)
-                pipe.writeBytes(gson.toJson(response) + "\n")
+                pipeSend(pipe, response)
             }
             "add" -> {
                 val item = gson.fromJson(message.payload, Todo::class.java)
                 TodoService.add(item)
 
                 val response = Response(message.id, gson.toJsonTree(item).asJsonObject)
-                pipe.writeBytes(gson.toJson(response) + "\n")
+                pipeSend(pipe, response)
             }
             "remove" -> {
                 val item = gson.fromJson(message.payload, Todo::class.java)
                 TodoService.remove(item)
 
                 val response = Response(message.id, gson.toJsonTree(item).asJsonObject)
-                pipe.writeBytes(gson.toJson(response) + "\n")
+                pipeSend(pipe, response)
             }
             "update" -> {
                 val item = gson.fromJson(message.payload, Todo::class.java)
                 TodoService.update(item)
 
                 val response = Response(message.id, gson.toJsonTree(item).asJsonObject)
-                pipe.writeBytes(gson.toJson(response) + "\n")
+                pipeSend(pipe, response)
             }
         }
+    }
+
+    private fun pipeSend(pipe: RandomAccessFile, response: Any) {
+        pipe.writeBytes(gson.toJson(response) + "\n")
     }
 }

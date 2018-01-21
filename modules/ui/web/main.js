@@ -13,7 +13,7 @@ function createWindow() {
 
     const pipeServer = net.createServer(function(stream) {
         stream.on('data', function(c) {
-            console.log('data:', c.toString());
+            console.log('Pipe: ', c.toString().trim());
         });
         stream.on('end', function() {
             pipeServer.close();
@@ -24,7 +24,7 @@ function createWindow() {
         console.log('Pipe is connected');
 
         let helloMessage = {
-            id: 1,
+            id: '1',
             method: 'hello'
         };
         pipeStream.write(JSON.stringify(helloMessage) + '\n');
@@ -43,7 +43,7 @@ function createWindow() {
         }
 
         serverProcess.stdout.on('data', function (data) {
-            console.log('Server: ' + data);
+            console.log('Server: ' + data.toString().trim());
         });
 
         console.log("Server PID: " + serverProcess.pid);
@@ -55,8 +55,8 @@ function createWindow() {
 function openWindow() {
     mainWindow = new BrowserWindow({
         title: 'Demo',
-        width: 640,
-        height: 480
+        width: 1280,
+        height: 800
     });
 
     mainWindow.loadURL(url.format({
