@@ -1,11 +1,14 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.2.10' apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.2.20' apply false
     id 'com.moowork.node' version '1.2.0' apply false
 }
 
 allprojects {
     repositories {
         jcenter()
+        maven {
+            url  "http://dl.bintray.com/kotlin/kotlinx.html/"
+        }
     }
 }
 
@@ -13,7 +16,7 @@ configure(project(':model')) {
     apply plugin: 'kotlin-platform-common'
 
     dependencies {
-        compile 'org.jetbrains.kotlin:kotlin-stdlib-common:1.2.10'
+        compile 'org.jetbrains.kotlin:kotlin-stdlib-common:1.2.20'
     }
 
     task sourcesJar(type: Jar) {
@@ -31,7 +34,7 @@ configure(project(':backend')) {
     apply plugin: 'application'
 
     dependencies {
-        compile('org.jetbrains.kotlin:kotlin-stdlib-jre8:1.2.10')
+        compile('org.jetbrains.kotlin:kotlin-stdlib-jre8:1.2.20')
         compile('com.google.code.gson:gson:2.8.2')
 
         compile project(':model')
@@ -46,7 +49,8 @@ configure(project(':ui')) {
     apply plugin: 'com.moowork.node'
 
     dependencies {
-        compile 'org.jetbrains.kotlin:kotlin-stdlib-js:1.2.10'
+        compile 'org.jetbrains.kotlin:kotlin-stdlib-js:1.2.20'
+        compile 'org.jetbrains.kotlinx:kotlinx-html-js:0.6.6'
 
         compile project(':model')
     }
@@ -92,7 +96,7 @@ configure(project(':ui')) {
             }
 
             copy {
-                from new File(file(compileKotlin2Js.destinationDir), 'min')
+                from file(compileKotlin2Js.destinationDir)
                 into "${projectDir}/build/web"
 
                 exclude '**/*.map'
@@ -136,7 +140,7 @@ configure(project(':ui')) {
     }
 }
 
-configure([project(':model'), project(':backend')]) {
+configure([project(':model')]) {
     sourceSets {
         main {
             kotlin {
@@ -146,11 +150,12 @@ configure([project(':model'), project(':backend')]) {
     }
 }
 
-configure([project(':ui')]) {
+configure([project(':ui'), project(':backend')]) {
     sourceSets {
         main {
             kotlin {
                 srcDirs += file('src')
+                // still required
                 srcDirs += project(':model').sourceSets.main.kotlin.srcDirs
             }
         }
