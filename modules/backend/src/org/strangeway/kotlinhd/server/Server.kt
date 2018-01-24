@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonPrimitive
 import org.strangeway.kotlinhd.model.Todo
 import org.strangeway.kotlinhd.server.service.TodoService
+import org.strangeway.kotlinhd.server.sys.IdValue
 import org.strangeway.kotlinhd.server.sys.Message
 import org.strangeway.kotlinhd.server.sys.Response
 import java.io.FileNotFoundException
@@ -52,7 +53,12 @@ object Server {
                 pipeSend(pipe, response)
             }
             "list" -> {
-                val response = Response(message.id, gson.toJsonTree(TodoService.list()).asJsonObject)
+                val response = Response(message.id, gson.toJsonTree(TodoService.list()).asJsonArray)
+                pipeSend(pipe, response)
+            }
+            "get" -> {
+                val idValue = gson.fromJson(message.payload, IdValue::class.java)
+                val response = Response(message.id, gson.toJsonTree(TodoService.get(idValue.id)).asJsonObject)
                 pipeSend(pipe, response)
             }
             "add" -> {

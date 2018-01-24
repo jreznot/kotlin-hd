@@ -4,21 +4,21 @@ var todo = todo || {},
 
 data = data || {};
 
-(function(todo, data, $) {
+(function (todo, data, $) {
     var defaults = {
-            todoTask: "todo-task",
-            todoHeader: "task-header",
-            todoDate: "task-date",
-            todoDescription: "task-description",
-            taskId: "task-",
-            formId: "todo-form",
-            dataAttribute: "data",
-            deleteDiv: "delete-div"
-        }, codes = {
-            "1" : "#pending",
-            "2" : "#inProgress",
-            "3" : "#completed"
-        };
+        todoTask: "todo-task",
+        todoHeader: "task-header",
+        todoDate: "task-date",
+        todoDescription: "task-description",
+        taskId: "task-",
+        formId: "todo-form",
+        dataAttribute: "data",
+        deleteDiv: "delete-div"
+    }, codes = {
+        "1": "#pending",
+        "2": "#inProgress",
+        "3": "#completed"
+    };
 
     todo.init = function (options) {
 
@@ -33,33 +33,33 @@ data = data || {};
         $.each(codes, function (index, value) {
             $(value).droppable({
                 drop: function (event, ui) {
-                        var element = ui.helper,
-                            css_id = element.attr("id"),
-                            id = css_id.replace(options.taskId, ""),
-                            object = data[id];
+                    var element = ui.helper,
+                        css_id = element.attr("id"),
+                        id = css_id.replace(options.taskId, ""),
+                        object = data[id];
 
-                            // Removing old element
-                            removeElement(object);
+                    // Removing old element
+                    removeElement(object);
 
-                            // Changing object code
-                            object.code = index;
+                    // Changing object code
+                    object.code = index;
 
-                            // Generating new element
-                            generateElement(object);
+                    // Generating new element
+                    generateElement(object);
 
-                            // Updating Local Storage
-                            data[id] = object;
-                            localStorage.setItem("todoData", JSON.stringify(data));
+                    // Updating Local Storage
+                    data[id] = object;
+                    localStorage.setItem("todoData", JSON.stringify(data));
 
-                            // Hiding Delete Area
-                            $("#" + defaults.deleteDiv).hide();
-                    }
+                    // Hiding Delete Area
+                    $("#" + defaults.deleteDiv).hide();
+                }
             });
         });
 
         // Adding drop function to delete div
         $("#" + options.deleteDiv).droppable({
-            drop: function(event, ui) {
+            drop: function (event, ui) {
                 var element = ui.helper,
                     css_id = element.attr("id"),
                     id = css_id.replace(options.taskId, ""),
@@ -80,7 +80,7 @@ data = data || {};
     };
 
     // Add Task
-    var generateElement = function(params){
+    var generateElement = function (params) {
         var parent = $(codes[params.code]),
             wrapper;
 
@@ -89,35 +89,25 @@ data = data || {};
         }
 
         wrapper = $("<div />", {
-            "class" : defaults.todoTask,
-            "id" : defaults.taskId + params.id,
-            "data" : params.id
+            "class": defaults.todoTask,
+            "id": defaults.taskId + params.id,
+            "data": params.id
         }).appendTo(parent);
 
         $("<div />", {
-            "class" : defaults.todoHeader,
+            "class": defaults.todoHeader,
             "text": params.title
         }).appendTo(wrapper);
 
-        $("<div />", {
-            "class" : defaults.todoDate,
-            "text": params.date
-        }).appendTo(wrapper);
-
-        $("<div />", {
-            "class" : defaults.todoDescription,
-            "text": params.description
-        }).appendTo(wrapper);
-
-	    wrapper.draggable({
-            start: function() {
+        wrapper.draggable({
+            start: function () {
                 $("#" + defaults.deleteDiv).show();
             },
-            stop: function() {
+            stop: function () {
                 $("#" + defaults.deleteDiv).hide();
             },
-	        revert: "invalid",
-	        revertDuration : 200
+            revert: "invalid",
+            revertDuration: 200
         });
     };
 
@@ -126,7 +116,7 @@ data = data || {};
         $("#" + defaults.taskId + params.id).remove();
     };
 
-    todo.add = function() {
+    todo.add = function () {
         var inputs = $("#" + defaults.formId + " :input"),
             errorMessage = "Title can not be empty",
             id, title, description, date, tempData;
@@ -147,7 +137,7 @@ data = data || {};
         id = new Date().getTime();
 
         tempData = {
-            id : id,
+            id: id,
             code: "1",
             title: title,
             date: date,
@@ -175,31 +165,25 @@ data = data || {};
 
         if (!responseDialog.length) {
             responseDialog = $("<div />", {
-                    title: title,
-                    id: responseId
+                title: title,
+                id: responseId
             }).appendTo($("body"));
         }
 
         responseDialog.html(message);
 
         buttonOptions = {
-            "Ok" : function () {
+            "Ok": function () {
                 responseDialog.dialog("close");
             }
         };
 
-	    responseDialog.dialog({
+        responseDialog.dialog({
             autoOpen: true,
             width: 400,
             modal: true,
             closeOnEscape: true,
             buttons: buttonOptions
         });
-    };
-
-    todo.clear = function () {
-        data = {};
-        localStorage.setItem("todoData", JSON.stringify(data));
-        $("." + defaults.todoTask).remove();
     };
 })(todo, data, jQuery);

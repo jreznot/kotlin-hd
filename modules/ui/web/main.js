@@ -8,30 +8,30 @@ let serverProcess;
 
 let pipeStream;
 
-let pipeRequestIdSeq = 0;
+let pipeRequestIdSeq = 1;
 let pipeRequests = new Map();
+global.pipe = {
+    "send": function(method, payload) {
+        let requestId = pipeRequestIdSeq++;
 
-global.pipe = {};
-global.pipe.send = function(method, payload) {
-    let requestId = pipeRequestIdSeq++;
+        let message = {
+            id: requestId.toString(),
+            method: method,
+            payload: payload
+        };
+        console.log("> Request sent: " + message.id);
+        pipeStream.write(JSON.stringify(message) + '\n');
 
-    let message = {
-        id: requestId.toString(),
-        method: method,
-        payload: payload
-    };
-    console.log("> Request sent: " + message.id);
-    pipeStream.write(JSON.stringify(message) + '\n');
+        let _resolve = null;
 
-    let _received;
+        var promise = new Promise(function(resolve, reject) {
+            _resolve = resolve;
+        });
+        promise.received = _resolve;
+        pipeRequests.set(message.id, promise);
 
-    var promise = new Promise(function(resolve, reject) {
-        _received = resolve;
-    });
-    promise.received = _received;
-    pipeRequests.set(message.id, promise);
-
-    return promise
+        return promise;
+    }
 };
 
 function createWindow() {
@@ -45,8 +45,9 @@ function createWindow() {
             if (data.id && data.payload) {
                 let promise = pipeRequests.get(data.id);
                 if (promise) {
-                    console.log("< Response received: " + data.id);
+                    pipeRequests.delete(data.id);
 
+                    console.log("< Response received: " + data.id);
                     promise.received(data.payload);
                 }
             }
@@ -126,12 +127,12 @@ app.on('ready', createWindow);
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
-        app.quit()
+        app.quit();
     }
 });
 
 app.on('activate', () => {
     if (mainWindow === null) {
-        createWindow()
+        createWindow();
     }
 });
