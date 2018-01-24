@@ -12,11 +12,15 @@ Based on:
 - Kotlin.js
 - Electron.js
 
+Uses Windows named pipes for Kotlin/Kotlin.js communication, network-free.
+
 ## Try!
+
+Disclaimer: current implemenation works only on Windows
 
 Simply start the application using Gradle wrapper:
 ```
-> ./gradlew runElectron 
+> ./gradlew runElectron
 ```
 
 ## Screenshot
