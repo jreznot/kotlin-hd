@@ -1,13 +1,15 @@
-import kotlinx.html.HTML
 import org.strangeway.kotlinhd.api.getServerPipe
 import org.strangeway.kotlinhd.api.jQuery
 import org.strangeway.kotlinhd.json.TodoSerializer
 import org.strangeway.kotlinhd.model.Status
 import org.strangeway.kotlinhd.model.Todo
 import org.w3c.dom.HTMLElement
+import org.w3c.dom.HTMLInputElement
 import kotlin.browser.document
 import kotlin.dom.createElement
 import kotlin.js.json
+
+val pipe = getServerPipe()
 
 fun main(args: Array<String>) {
     jQuery(".task-container").droppable()
@@ -16,7 +18,6 @@ fun main(args: Array<String>) {
             "revertDuration" to 200
     ))
 
-    val pipe = getServerPipe()
     pipe.send("list", json()).then({ jsonArray ->
         // data loaded - show !
         val todos = TodoSerializer.fromJsonArray(jsonArray)
@@ -25,6 +26,7 @@ fun main(args: Array<String>) {
         }
     })
 
+    // Adding drop function to each status of task
     for (status in Status.values()) {
         jQuery("#${status.name}").droppable(json(
                 "drop" to { _: dynamic, ui: dynamic ->
@@ -41,6 +43,7 @@ fun main(args: Array<String>) {
 
                         createTodoElement(todo)
 
+                        // Updating backend
                         pipe.send("update", TodoSerializer.toJson(todo))
                     }).then({
                         getDeleteDiv().style.display = "none"
@@ -49,17 +52,28 @@ fun main(args: Array<String>) {
         ))
     }
 
-    // todo Adding drop function to delete div
+    // Adding drop function to delete div
+    jQuery(getDeleteDiv()).droppable(json(
+            "drop" to { _: dynamic, ui: dynamic ->
+                val element = ui.helper
+                val cssId = element.attr("id").unsafeCast<String>()
+                val taskId = cssId.replace("task-", "")
 
-    // todo event handling
+                pipe.send("get", json("id" to taskId)).then({ jsonObject ->
+                    val todo = TodoSerializer.fromJson(jsonObject)
 
-    // todo server communication
+                    removeTodoElement(todo)
 
-    // todo check page refresh
+                    // Updating backend
+                    pipe.send("delete", TodoSerializer.toJson(todo))
+                }).then({
+                    getDeleteDiv().style.display = "none"
+                })
+            }
+    ))
 
-    // todo remove todo.js
-
-    // todo comments !
+    val taskAddBtn = document.getElementById("task-add-btn")!! as HTMLInputElement
+    taskAddBtn.onclick = { addTodo() }
 }
 
 fun getDeleteDiv(): HTMLElement {
@@ -97,13 +111,44 @@ fun removeTodoElement(todo: Todo) {
 }
 
 fun addTodo() {
+    val taskTitleInput = document.getElementById("task-title-input")!! as HTMLInputElement
 
+    if (taskTitleInput.value.isBlank()) {
+        showValidationDialog()
+        return
+    }
+
+    val todo = Todo(null, taskTitleInput.value, Status.BACKLOG)
+
+    taskTitleInput.value = ""
+
+    // Updating backend
+    pipe.send("add", TodoSerializer.toJson(todo)).then({ jsonObject ->
+        val createdTodo = TodoSerializer.fromJson(jsonObject)
+        createTodoElement(createdTodo)
+    })
 }
 
-fun removeTodo() {
+fun showValidationDialog() {
+    val validationDialog = document.createElement("div", {
+        id = "validation-dialog"
+        textContent = "Title can not be empty"
 
-}
+        setAttribute("title", "Validation")
+    })
 
-fun showDialog() {
+    document.body!!.appendChild(validationDialog)
 
+    val jqDialog = jQuery(validationDialog)
+    jqDialog.dialog(json(
+            "autoOpen" to true,
+            "width" to 400,
+            "modal" to true,
+            "closeOnEscape" to true,
+            "buttonsOptions" to json(
+                    "Ok" to {
+                        jqDialog.dialog("close")
+                    }
+            )
+    ))
 }
