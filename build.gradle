@@ -96,7 +96,7 @@ configure(project(':ui')) {
             }
 
             copy {
-                from file(compileKotlin2Js.destinationDir)
+                from file(runDceKotlinJs.destinationDir)
                 into "${projectDir}/build/web"
 
                 exclude '**/*.map'
